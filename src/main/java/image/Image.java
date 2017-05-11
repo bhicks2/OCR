@@ -26,6 +26,12 @@ public class Image {
     private int height;
     private int width;
 
+    // ===================
+    // ===================
+    // CONSTRUCTORS
+    // ===================
+    // ===================
+
     // ====================================================
     // constructor Image(String)
     // ====================================================
@@ -33,7 +39,7 @@ public class Image {
     // and constructs an Image object from the image in
     // the given file.
     // ====================================================
-    // Exceptions: this file with throw a FileNotFound
+    // Exceptions: this file will throw a FileNotFound
     // exception if the provided file does not exist, and
     // an IOException if the image cannot be read.
     // ====================================================
@@ -63,6 +69,16 @@ public class Image {
         this.image = convertToArray(image);
     }
 
+    // ====================================================
+    // constructor Image(Pixel[][])
+    // ====================================================
+    // This constructor takes in a 2D pixel array and
+    // constructs an image object to represent the image
+    // represented in the array.
+    // ====================================================
+    // Exceptions: this method should never throw
+    // an exception
+    // ====================================================
     public Image(Pixel[][] image){
         this.image = image;
 
@@ -70,6 +86,15 @@ public class Image {
         this.width = this.height == 0 ? 0 : image[0].length;
     }
 
+    // ====================================================
+    // constructor Image(Image)
+    // ====================================================
+    // This is the copy constructor which creates a new
+    // object instance with identical data.
+    // ====================================================
+    // Exceptions: this method should never throw
+    // an exception
+    // ====================================================
     public Image(Image image){
         this.width = image.width;
         this.height = image.height;
@@ -82,6 +107,51 @@ public class Image {
         }
     }
 
+    // ===================
+    // ===================
+    // PUBLIC METHODS
+    // ===================
+    // ===================
+
+    // ====================================================
+    // method saveImage(String filename)
+    // ====================================================
+    // This function saves the image to the specified file,
+    // as defined in the filename.
+    //
+    // Note that filename is expected to have an extension.
+    // Although the method will work without one, it will
+    // default to using .png as the extension.
+    // ====================================================
+    public void saveImage(String filename){
+        int startOfExtension = filename.lastIndexOf(".");
+
+        String extension = "png";
+        if(startOfExtension != -1){
+            extension = filename.substring(startOfExtension + 1);
+        } else {
+            filename = filename.concat("." + extension);
+        }
+
+        BufferedImage image = buildBufferedImage();
+
+        File file = new File(filename);
+
+        try {
+            ImageIO.write(image, extension, file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ===============================================================
+    // method extractSubImage(int row, int col, int height, int width)
+    // ===============================================================
+    // This function creates a new Image object that represents
+    // a subsection of the original image. This sub-image has its
+    // origin located at (row, col) and has the height and width
+    // provided.
+    // ===============================================================
     public Image extractSubImage(int row, int col, int height, int width){
         Pixel[][] subimage = new Pixel[height][width];
         for(int r = row; r < row + height; r++){
@@ -102,60 +172,16 @@ public class Image {
     }
 
     // ====================================================
-    // method getPixel(int row, int col)
+    // method adjustSize(int newHeight, int newWidth)
     // ====================================================
-    // This function returns the pixel located at the
-    // given row and col. Note that the origin (0, 0) is
-    // located at the upper left of the image.
-    // ====================================================
-    // Exceptions: this function throws an ArrayOutOfBounds
-    // exception if the given row or col is outside of the
-    // bounds of the image.
-    // ====================================================
-    public Pixel getPixel(int row, int col){
-        return image[row][col];
-    }
-
-    // ====================================================
-    // method saveImage(String filename)
-    // ====================================================
-    // This function saves the image to the specified file,
-    // as defined in the filename.
+    // This function creates a new image by stretching or
+    // shrinking the original image to fit the new height
+    // and width.
     //
-    // Note that filename is expected to have an extension.
-    // Although the program will work without one, it will
-    // default to using .png as the extension.
-    public void saveImage(String filename){
-        int startOfExtension = filename.lastIndexOf(".");
-
-        String extension = "png";
-        if(startOfExtension != -1){
-            extension = filename.substring(startOfExtension + 1);
-        } else {
-            filename = filename.concat("." + extension);
-        }
-
-        BufferedImage image = buildBufferedImage();
-
-        File file = new File(filename);
-
-        try {
-            System.out.println("Writing");
-            ImageIO.write(image, extension, file);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        System.out.println("Done Writing");
-    }
-
-    public int getHeight(){
-        return this.height;
-    }
-
-    public int getWidth(){
-        return this.width;
-    }
-
+    // New pixel values are defined using a weighted
+    // average (by proportion) of each grid cell's contents
+    // when overlaid on the picture grid.
+    // ====================================================
     public Image adjustSize(int newHeight, int newWidth){
         Pixel[][] newImage = new Pixel[newHeight][newWidth];
 
@@ -215,6 +241,30 @@ public class Image {
 
         return new Image(newImage);
     }
+
+    // ===================
+    // ===================
+    // GETTERS & SETTERS
+    // ===================
+    // ===================
+
+    public int getHeight(){
+        return this.height;
+    }
+
+    public int getWidth(){
+        return this.width;
+    }
+
+    public Pixel getPixel(int row, int col){
+        return image[row][col];
+    }
+
+    // ===================
+    // ===================
+    // PRIVATE
+    // ===================
+    // ===================
 
     // ====================================================
     // method convertToArray(BufferedImage)
