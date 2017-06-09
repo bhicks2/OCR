@@ -19,7 +19,7 @@ class Image(object):
         elif isinstance(image, Image):
             self.image = np.array(image.image, copy = True)
         elif isinstance(image, str):
-            self.image = misc.imread(image)[:, :, RED_INDEX : BLUE_INDEX + 1].astype(float)
+            self.image = misc.imread(image, mode='RGB')[:, :, RED_INDEX : BLUE_INDEX + 1].astype(float)
 
     @property
     def height(self):
@@ -39,6 +39,56 @@ class Image(object):
             return Image(new_image)
         else:
             self.image = new_image.astype(float)
+
+    def crop_to_contents(self, buffer, in_place = False):
+        binary_image = self.binarize()
+
+        image_array = binary_image.image
+
+        h_histogram = np.min(image_array[:, :, 0], axis = 0)
+
+        # horizontal
+        h_start = None
+        for i in range(h_histogram.shape[0]):
+            if h_histogram[i] == 0:
+                h_start = i
+                break
+
+        h_end = None
+        for i in np.arange(h_histogram.shape[0] - 1, -1, -1):
+            if h_histogram[i] == 0:
+                h_end = i + 1
+                break
+
+        # vertical
+        v_histogram = np.min(image_array[:, :, 0], axis = 1)
+
+        # horizontal
+        v_start = None
+        for i in range(v_histogram.shape[0]):
+            if v_histogram[i] == 0:
+                v_start = i
+                break
+
+        v_end = None
+        for i in np.arange(v_histogram.shape[0] - 1, -1, -1):
+            if v_histogram[i] == 0:
+                v_end = i + 1
+                break
+
+        new_width = h_end - h_start
+        new_height = v_end - v_start
+
+        cropped_array = self.crop(v_start, h_start, new_height, new_width).image
+
+        empty = np.full([new_height + 2*buffer, new_width + 2*buffer, 3], 255)
+        empty[buffer : buffer + new_height, buffer : buffer + new_width] = cropped_array
+
+        if not in_place:
+            return Image(empty)
+        else:
+            self.image = zeros.astype(float)
+
 
     def crop(self, row, col, new_height, new_width, in_place = False):
         new_image = self.image[row : row + new_height, col : col + new_width]
@@ -133,7 +183,6 @@ class Image(object):
         if threshold is None:
             threshold = np.mean(self.image, axis = (0, 1))
 
-        print threshold
         threshold = np.reshape(threshold, [1, 1, 3])
 
         new_image = 255 * (self.image > threshold)
@@ -365,3 +414,5 @@ class Image(object):
             return self.image[row, col, :]
         else:
             return self.image[row, col, color]
+
+Image("../resources/test_page.png").crop_to_contents(0)

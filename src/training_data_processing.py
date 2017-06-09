@@ -1,56 +1,90 @@
 from image import Image
 import os
+import subprocess
 
-# takes in a set of training examples from the provided folder
-# and generates a larger set of training examples by adding
-# noise, changing brightness, and other changes
+DIRECTORY = "../resources/training_examples"
 
-print "Please enter path:"
-folder = raw_input()
+CHARACTERS_TO_GENERATE = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
+'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'U', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '.', ',', '!', ':', ';', '-',
+'1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
 
-original_folder = folder + "/originals"
-for filename in os.listdir(original_folder + ""):
-    path = original_folder + "/" + filename
+FONTS_TO_MAKE = ['American Typewriter', 'Andale Mono', 'Arial Black', 'Arial Narrow',
+'Arial Rounded MT Bold', 'Arial Unicode MS', 'Avenir', 'Avenir Next', 'Avenir Next Condensed',
+'Baskerville', 'Big Caslon',
+'Bradley Hand', 'Brush Script MT', 'Chalkboard', 'Chalkboard SE', 'Chalkduster',
+'Cochin', 'Comic Sans MS', 'Copperplate', 'Courier', 'Courier New', 'Didot', 'Futura',
+'Geneva', 'Georgia', 'Gill Sans', 'Helvetica', 'Helvetica Neue', 'Herculanum', 'Hoefler Text',
+'Impact', 'Lucida Grande', 'Luminari', 'Marker Felt', 'Menlo', 'Microsoft Sans Serif',
+'Monaco', 'Noteworthy', 'Optima', 'Palatino', 'Papyrus', 'Phosphate', 'PT Mono',
+'PT Serif', 'PT Serif Caption', 'Savoye LET', 'SignPainter', 'Skia', 'Snell Roundhand',
+'STIXGeneral', 'Tahoma', 'Times', 'Times New Roman', 'Trebuchet MS',
+'Verdana', 'Zapfino']
 
-    if not (filename.endswith(".jpeg") or filename.endswith(".jpg") or filename.endswith(".png")):
-        continue
+for character in CHARACTERS_TO_GENERATE:
+    filename = "training_{}_example".format(character)
 
-    original = Image(path)
-    print "Currently Processessing:",filename
-    # search from end to make sure its actually the extension
-    start_of_extension = filename[::-1].find(".")
-    name = filename[0:-(start_of_extension + 1)]
+    full_path = DIRECTORY + "/" + filename
+    if not os.path.exists(full_path):
+        os.mkdir(full_path)
 
-    noisy_20 = original.add_noise(20)
-    noisy_40 = original.add_noise(40)
-    noisy_60 = original.add_noise(60)
-    noisy_80 = original.add_noise(80)
-    noisy_100 = original.add_noise(100)
+    path_to_output = full_path + "/example"
 
-    dark_20 = original.darken(20)
-    dark_40 = original.darken(40)
-    dark_60 = original.darken(60)
+    with open(path_to_output + ".tex", 'w') as file:
+        file.write("%!TEX TS-program = xelatex\n")
+        file.write("%!TEX encoding = UTF-8 Unicode\n")
 
-    bright_20 = original.brighten(20)
-    bright_40 = original.brighten(40)
-    bright_60 = original.brighten(60)
+        file.write("\\documentclass[extrafontsizes, 60pt]{memoir}\n")
 
-    processed_path = folder + "/processed/" + name
-    if not os.path.exists(processed_path):
-        os.mkdir(processed_path)
+        # Write packages
+        file.write("\\usepackage[margin=1in]{geometry}\n")
+        file.write("\\geometry{letterpaper}\n")
+        file.write("\\usepackage{graphicx}\n")
+        file.write("\\usepackage{amssymb}\n")
+        file.write("\\usepackage{nopageno}\n")
 
-    noisy_20.save_image(processed_path + "/" + "noisy_20.jpg")
-    noisy_40.save_image(processed_path + "/" + "noisy_40.jpg")
-    noisy_60.save_image(processed_path + "/" + "noisy_60.jpg")
-    noisy_80.save_image(processed_path + "/" + "noisy_80.jpg")
-    noisy_100.save_image(processed_path + "/" + "noisy_100.jpg")
+        file.write("\\usepackage{fontspec,xltxtra,xunicode}\n")
+        file.write("\\defaultfontfeatures{Mapping=tex-text}\n")
 
-    dark_20.save_image(processed_path + "/" + "dark_20.jpg")
-    dark_40.save_image(processed_path + "/" + "dark_40.jpg")
-    dark_60.save_image(processed_path + "/" + "dark_60.jpg")
+        file.write("\\setromanfont[Mapping=tex-text]{Times New Roman}\n")
 
-    bright_20.save_image(processed_path + "/" + "bright_20.jpg")
-    bright_40.save_image(processed_path + "/" + "bright_40.jpg")
-    bright_60.save_image(processed_path + "/" + "bright_60.jpg")
+        file.write("\\begin{document}\n")
 
-    original.save_image(processed_path + "/original.jpg")
+
+        for font in FONTS_TO_MAKE:
+            file.write("\\setromanfont[Mapping=tex-text]{" + font + "}\n")
+            file.write("{\\Huge " + character + "}\n")
+            file.write("\\newpage\n")
+
+        file.write("\\end{document}")
+
+        file.close()
+
+        #os.system("pdftex {}".format(path_to_output))
+        tex_production = subprocess.Popen(['xelatex', "--interaction=batchmode", "--output-directory={}".format(full_path), path_to_output + ".tex"])
+        tex_production.communicate()
+
+        print "Completed file"
+
+        image_conversion = subprocess.Popen(['convert', path_to_output + ".pdf", path_to_output + ".png"])
+        image_conversion.communicate()
+
+        print "Completed image conversion"
+
+        for i in range(len(FONTS_TO_MAKE)):
+            image_name = full_path + "/example-{}.png".format(i)
+            new_image_name = full_path + "/example_{}.png".format(i)
+
+            white_background = subprocess.Popen(['convert', image_name, "-flatten", new_image_name])
+            white_background.communicate()
+
+            os.remove(image_name)
+
+            image = Image(new_image_name).crop_to_contents(2)
+            image.save_image(new_image_name)
+
+        os.remove(full_path + "/example.pdf")
+        os.remove(full_path + "/example.log")
+        os.remove(full_path + "/example.aux")
+        os.remove(full_path + "/example.tex")
