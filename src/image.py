@@ -34,7 +34,7 @@ class Image(object):
         return (self.height, self.width)
 
     def resize(self, new_width, new_height, in_place = False):
-        new_image = misc.imresize(self.image, (height, width))
+        new_image = misc.imresize(self.image, (new_height, new_width), interp="cubic")
         if not in_place:
             return Image(new_image)
         else:
@@ -414,5 +414,3 @@ class Image(object):
             return self.image[row, col, :]
         else:
             return self.image[row, col, color]
-
-Image("../resources/test_page.png").crop_to_contents(0)

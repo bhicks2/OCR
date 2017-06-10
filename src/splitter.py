@@ -109,7 +109,6 @@ class WordSplitter(object):
             return []
 
         text_image = grayscale.crop(0, start_of_text, grayscale.height, end_of_text - start_of_text)
-        text_image.display_image()
         is_break = is_break[start_of_text : end_of_text]
 
         running_width = 0
@@ -121,7 +120,6 @@ class WordSplitter(object):
                 running_width = 0
 
         average_width = np.mean(break_widths)
-        print average_width
 
         word_bounds = []
 
@@ -154,10 +152,7 @@ class WordSplitter(object):
         for i in range(1, len(word_bounds)):
             check_bounds = word_bounds[i]
 
-            print "{} / {}".format(current_bounds, check_bounds)
-
             if check_bounds[0] - current_bounds[1] < min_space:
-                print "...coalesce"
                 current_bounds = (current_bounds[0], check_bounds[1])
             else:
                 start, end = current_bounds
